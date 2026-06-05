@@ -1,0 +1,1214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dallas College Success Coach Chatbot - Interactive Prototype</title>
+  
+  <!-- Google Fonts: Inter & Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <style>
+    /* ----------------------------------
+       1. Core Design System & Variables
+       ---------------------------------- */
+    :root {
+      --primary: #0056b3;
+      --primary-light: #e6f0fa;
+      --secondary: #d9381e; /* Dallas College Red accent */
+      --dark: #0f172a;
+      --light: #f8fafc;
+      --border: #e2e8f0;
+      --shadow-sm: 0 2px 4px rgba(15, 23, 42, 0.05);
+      --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.08);
+      --shadow-lg: 0 10px 25px -5px rgba(15, 23, 42, 0.12), 0 8px 10px -6px rgba(15, 23, 42, 0.12);
+      --font-heading: 'Outfit', 'Inter', sans-serif;
+      --font-body: 'Inter', sans-serif;
+      --radius: 16px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-body);
+      background-color: #f1f5f9;
+      color: var(--dark);
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+
+    /* ----------------------------------
+       2. Mock Dallas College Portal Styles
+       ---------------------------------- */
+    .portal-header {
+      background-color: white;
+      border-bottom: 3px solid var(--primary);
+      padding: 16px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: var(--shadow-sm);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .portal-logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .portal-logo-svg {
+      width: 45px;
+      height: 45px;
+    }
+
+    .portal-logo-text {
+      font-family: var(--font-heading);
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--primary);
+      letter-spacing: -0.5px;
+    }
+
+    .portal-logo-text span {
+      color: var(--secondary);
+    }
+
+    .portal-nav {
+      display: flex;
+      gap: 24px;
+      list-style: none;
+      font-weight: 500;
+      font-size: 15px;
+    }
+
+    .portal-nav a {
+      color: #64748b;
+      text-decoration: none;
+      transition: color 0.2s ease;
+    }
+
+    .portal-nav a:hover, .portal-nav a.active {
+      color: var(--primary);
+    }
+
+    .portal-user {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .user-avatar {
+      width: 38px;
+      height: 38px;
+      background-color: var(--primary-light);
+      border: 2px solid var(--primary);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      color: var(--primary);
+      font-size: 14px;
+    }
+
+    .portal-container {
+      max-width: 1200px;
+      margin: 40px auto;
+      padding: 0 24px;
+    }
+
+    .portal-banner {
+      background: linear-gradient(135deg, #004494 0%, #0066d6 100%);
+      color: white;
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: var(--shadow-lg);
+      margin-bottom: 32px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .portal-banner::after {
+      content: '';
+      position: absolute;
+      right: -10%;
+      top: -20%;
+      width: 300px;
+      height: 300px;
+      background-color: rgba(255, 255, 255, 0.05);
+      border-radius: 50%;
+    }
+
+    .portal-banner h1 {
+      font-family: var(--font-heading);
+      font-size: 36px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .portal-banner p {
+      font-size: 16px;
+      opacity: 0.9;
+      max-width: 600px;
+      line-height: 1.5;
+    }
+
+    .grid-dashboard {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 32px;
+    }
+
+    @media (max-width: 768px) {
+      .grid-dashboard {
+        grid-template-columns: 1fr;
+      }
+      .portal-header {
+        padding: 16px;
+      }
+      .portal-nav {
+        display: none;
+      }
+    }
+
+    .card {
+      background: white;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      padding: 24px;
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 24px;
+    }
+
+    .card h2 {
+      font-family: var(--font-heading);
+      font-size: 20px;
+      color: var(--dark);
+      margin-bottom: 16px;
+      border-left: 4px solid var(--primary);
+      padding-left: 12px;
+    }
+
+    .catalog-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .catalog-item:last-child {
+      border-bottom: none;
+    }
+
+    .course-badge {
+      background-color: var(--primary-light);
+      color: var(--primary);
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .course-title {
+      font-weight: 500;
+      font-size: 14px;
+      flex-grow: 1;
+      margin-left: 12px;
+    }
+
+    .course-credits {
+      color: #64748b;
+      font-size: 13px;
+    }
+
+    /* ----------------------------------
+       3. Waving Mascot Floating Widget Trigger
+       ---------------------------------- */
+    .widget-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+    }
+
+    /* Circular pop-out speech bubble banner */
+    .widget-bubble-banner {
+      background-color: var(--primary);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 20px 20px 0 20px;
+      font-size: 14px;
+      font-weight: 600;
+      box-shadow: var(--shadow-md);
+      margin-bottom: 12px;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      pointer-events: none;
+      white-space: nowrap;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      position: relative;
+      animation: auto-banner 15s ease-in-out infinite;
+    }
+
+    /* Beautiful speech bubble pointer pointing directly down to mascot */
+    .widget-bubble-banner::after {
+      content: '';
+      position: absolute;
+      bottom: -6px;
+      right: 28px;
+      width: 12px;
+      height: 12px;
+      background-color: var(--primary);
+      transform: rotate(45deg);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      border-right: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .widget-container:hover .widget-bubble-banner {
+      opacity: 1 !important;
+      transform: translateY(0) scale(1) !important;
+      animation: none;
+    }
+
+    /* Circular trigger button containing waving mascot */
+    .widget-trigger {
+      width: 76px;
+      height: 76px;
+      background-color: white;
+      border-radius: 50%;
+      box-shadow: var(--shadow-lg);
+      border: 3px solid var(--primary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: visible;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+    }
+
+    .widget-trigger:hover {
+      transform: scale(1.08) rotate(2deg);
+      box-shadow: 0 15px 30px -5px rgba(0, 86, 179, 0.3);
+    }
+
+    /* Mascot SVG styling */
+    .mascot-svg {
+      width: 72px;
+      height: 72px;
+      position: absolute;
+      bottom: 0;
+      animation: auto-popout 15s ease-in-out infinite;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .widget-trigger:hover .mascot-svg {
+      transform: translateY(-24px) scale(1.05) rotate(-8deg) !important;
+      animation: none;
+    }
+
+    /* Custom waving arm keyframe micro-animations */
+    .mascot-arm-wave {
+      transform-origin: 20px 62px;
+      animation: auto-wave 15s ease-in-out infinite;
+    }
+
+    .widget-trigger:hover .mascot-arm-wave {
+      animation: wave-hand 0.8s ease-in-out infinite !important;
+    }
+
+    /* Keyframe Animations for automated 15-second noticeability loops */
+    @keyframes auto-popout {
+      0%, 100%, 4%, 31% {
+        transform: translateY(0) scale(1) rotate(0deg);
+      }
+      5%, 30% {
+        transform: translateY(-24px) scale(1.05) rotate(-8deg); /* Rising up & Leaning left */
+      }
+    }
+
+    @keyframes auto-wave {
+      0%, 100%, 4%, 31% {
+        transform: rotate(0deg);
+      }
+      6%, 10%, 14%, 18%, 22%, 26% {
+        transform: rotate(-18deg); /* Wave arm left */
+      }
+      8%, 12%, 16%, 20%, 24%, 28% {
+        transform: rotate(12deg); /* Wave arm right */
+      }
+    }
+
+    @keyframes auto-banner {
+      0%, 100%, 4%, 31% {
+        opacity: 0;
+        transform: translateY(10px) scale(0.9);
+        pointer-events: none;
+      }
+      5%, 30% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        pointer-events: all;
+      }
+    }
+
+    @keyframes wave-hand {
+      0%, 100% {
+        transform: rotate(0deg);
+      }
+      25% {
+        transform: rotate(-18deg);
+      }
+      75% {
+        transform: rotate(12deg);
+      }
+    }
+
+    /* Notification dot overlay */
+    .widget-badge {
+      position: absolute;
+      top: -2px;
+      right: -2px;
+      width: 18px;
+      height: 18px;
+      background-color: var(--secondary);
+      border-radius: 50%;
+      border: 2px solid white;
+      animation: pulse-badge 1.8s infinite;
+    }
+
+    @keyframes pulse-badge {
+      0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(217, 56, 30, 0.7);
+      }
+      70% {
+        transform: scale(1);
+        box-shadow: 0 0 0 8px rgba(217, 56, 30, 0);
+      }
+      100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(217, 56, 30, 0);
+      }
+    }
+
+    /* ----------------------------------
+       4. Floating Chat Panel UI (Glassmorphism)
+       ---------------------------------- */
+    .chat-panel {
+      position: fixed;
+      bottom: 110px;
+      right: 24px;
+      width: 410px;
+      height: 600px;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-radius: var(--radius);
+      border: 1px solid rgba(226, 232, 240, 0.8);
+      box-shadow: var(--shadow-lg);
+      z-index: 9998;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transform: translateY(30px) scale(0.95);
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .chat-panel.active {
+      transform: translateY(0) scale(1);
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    /* Chat header matching sketch: deep-blue banner with rounded features */
+    .chat-header {
+      background: linear-gradient(135deg, var(--primary) 0%, #004494 100%);
+      color: white;
+      padding: 16px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .chat-header-profile {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .chat-header-avatar {
+      width: 42px;
+      height: 42px;
+      background: white;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .chat-header-avatar .mascot-svg {
+      width: 40px;
+      height: 40px;
+      bottom: -2px;
+    }
+
+    .chat-header-info h3 {
+      font-family: var(--font-heading);
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .chat-header-info span {
+      font-size: 12px;
+      opacity: 0.8;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .chat-header-info span::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      background-color: #22c55e;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .chat-close-btn {
+      background: none;
+      border: none;
+      color: white;
+      opacity: 0.7;
+      cursor: pointer;
+      font-size: 20px;
+      transition: opacity 0.2s;
+    }
+
+    .chat-close-btn:hover {
+      opacity: 1;
+    }
+
+    /* Scrollable chat body */
+    .chat-body {
+      flex-grow: 1;
+      padding: 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      background-color: #f8fafc;
+    }
+
+    .chat-date-divider {
+      text-align: center;
+      font-size: 11px;
+      color: #94a3b8;
+      font-weight: 500;
+      margin: 8px 0;
+    }
+
+    /* Message Bubbles layout */
+    .message {
+      display: flex;
+      gap: 12px;
+      max-width: 85%;
+    }
+
+    .message.user {
+      align-self: flex-end;
+      flex-direction: row-reverse;
+    }
+
+    .message.bot {
+      align-self: flex-start;
+    }
+
+    .msg-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .message.user .msg-avatar {
+      background-color: var(--primary);
+      color: white;
+      font-weight: 700;
+      font-size: 11px;
+    }
+
+    .message.bot .msg-avatar {
+      background-color: white;
+      border: 1.5px solid var(--border);
+    }
+
+    .msg-content {
+      background-color: white;
+      border: 1px solid var(--border);
+      padding: 12px 16px;
+      border-radius: 0 16px 16px 16px;
+      font-size: 14px;
+      line-height: 1.5;
+      color: var(--dark);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .message.user .msg-content {
+      background-color: var(--primary);
+      color: white;
+      border-radius: 16px 0 16px 16px;
+      border: none;
+    }
+
+    /* RAG Pipeline similarity spinner */
+    .rag-loading {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--primary);
+      font-weight: 500;
+      background-color: var(--primary-light);
+      padding: 6px 12px;
+      border-radius: 10px;
+      border: 1px dashed rgba(0, 86, 179, 0.3);
+      width: fit-content;
+      margin-bottom: 8px;
+    }
+
+    .spinner-ring {
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(0, 86, 179, 0.2);
+      border-top: 2px solid var(--primary);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* ----------------------------------
+       5. Citations & YouTube-style Sources
+       ---------------------------------- */
+    .citations-box {
+      margin-top: 10px;
+      border-top: 1px solid var(--border);
+      padding-top: 10px;
+    }
+
+    .citations-header {
+      font-size: 11px;
+      font-weight: 700;
+      color: #64748b;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .citation-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background-color: #f1f5f9;
+      border: 1px solid var(--border);
+      color: var(--primary);
+      font-size: 12px;
+      font-weight: 500;
+      padding: 4px 8px;
+      border-radius: 6px;
+      text-decoration: none;
+      margin-right: 6px;
+      margin-top: 4px;
+      transition: all 0.2s ease;
+    }
+
+    .citation-link:hover {
+      background-color: var(--primary-light);
+      border-color: rgba(0, 86, 179, 0.3);
+    }
+
+    .citation-num {
+      background-color: var(--primary);
+      color: white;
+      font-size: 9px;
+      font-weight: 700;
+      border-radius: 4px;
+      padding: 1px 4px;
+      display: inline-block;
+    }
+
+    /* FAQ Quick Selection Chips */
+    .faq-chips-container {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .faq-chips-title {
+      font-size: 12px;
+      color: #64748b;
+      font-weight: 600;
+    }
+
+    .faq-chip {
+      background-color: white;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-size: 13px;
+      color: var(--primary);
+      font-weight: 500;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.2s;
+      width: 100%;
+    }
+
+    .faq-chip:hover {
+      background-color: var(--primary-light);
+      border-color: rgba(0, 86, 179, 0.3);
+      transform: translateX(3deg);
+    }
+
+    /* Input Footer matching original design */
+    .chat-footer {
+      padding: 14px 18px;
+      border-top: 1px solid var(--border);
+      background-color: white;
+    }
+
+    .chat-input-wrapper {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      background-color: #f1f5f9;
+      border-radius: 24px;
+      padding: 4px 6px 4px 16px;
+      border: 1.5px solid transparent;
+      transition: all 0.2s ease;
+    }
+
+    .chat-input-wrapper:focus-within {
+      background-color: white;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(0, 86, 179, 0.15);
+    }
+
+    .chat-input {
+      flex-grow: 1;
+      border: none;
+      background: none;
+      outline: none;
+      font-family: var(--font-body);
+      font-size: 14px;
+      padding: 8px 0;
+      color: var(--dark);
+    }
+
+    .chat-send-btn {
+      width: 36px;
+      height: 36px;
+      background-color: var(--primary);
+      border-radius: 50%;
+      border: none;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform 0.2s, background-color 0.2s;
+    }
+
+    .chat-send-btn:hover {
+      background-color: #004494;
+      transform: scale(1.05);
+    }
+
+    .chat-send-btn svg {
+      width: 18px;
+      height: 18px;
+      fill: currentColor;
+    }
+
+    .credits-footer {
+      font-size: 10px;
+      text-align: center;
+      color: #94a3b8;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ===================================
+       1. Portal Hub Screen Simulation
+       =================================== -->
+  <header class="portal-header">
+    <div class="portal-logo">
+      <!-- Dallas College Simulated Logo -->
+      <svg class="portal-logo-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="50" cy="50" r="45" fill="#0056b3" />
+        <path d="M50 15 L80 40 L80 75 L20 75 L20 40 Z" fill="#ffffff" />
+        <polygon points="50,22 72,40 50,58 28,40" fill="#d9381e" />
+        <circle cx="50" cy="40" r="6" fill="#ffffff" />
+      </svg>
+      <div class="portal-logo-text">dallas<span>college</span></div>
+    </div>
+    
+    <nav>
+      <ul class="portal-nav">
+        <li><a href="#" class="active">Student Hub</a></li>
+        <li><a href="#">Academic Catalog</a></li>
+        <li><a href="#">Financial Aid</a></li>
+        <li><a href="#">Directory</a></li>
+      </ul>
+    </nav>
+    
+    <div class="portal-user">
+      <div class="user-avatar">SA</div>
+      <div style="font-size: 14px; font-weight: 600; color: #475569;">Richland Aid</div>
+    </div>
+  </header>
+
+  <main class="portal-container">
+    <div class="portal-banner">
+      <h1>Welcome back to Richland Campus</h1>
+      <p>This sandbox environment is configured to demonstrate the embedded Success Coach RAG Advisor prototype. Hover and click the floating mascot in the bottom-right corner to begin chatting!</p>
+    </div>
+
+    <div class="grid-dashboard">
+      <div>
+        <div class="card">
+          <h2>Academic Program Summary</h2>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px; margin-bottom: 20px;">
+            <div>
+              <div style="font-size: 13px; color: #64748b; font-weight: 500;">ACTIVE MAJOR</div>
+              <div style="font-size: 18px; font-weight: 700; color: var(--dark);">AAS Cybersecurity Catalog</div>
+            </div>
+            <div style="text-align: right;">
+              <div style="font-size: 13px; color: #64748b; font-weight: 500;">COMPLETED CREDITS</div>
+              <div style="font-size: 18px; font-weight: 700; color: var(--primary);">28 / 60 Credits</div>
+            </div>
+          </div>
+          
+          <div style="background-color: #f1f5f9; height: 10px; border-radius: 5px; overflow: hidden; margin-bottom: 12px;">
+            <div style="background-color: var(--primary); width: 46%; height: 100%;"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Cybersecurity Course Checklist</h2>
+          <div class="catalog-item">
+            <span class="course-badge">COSC 1436</span>
+            <span class="course-title">Programming Fundamentals I (Prerequisite)</span>
+            <span class="course-credits">4 Credits</span>
+          </div>
+          <div class="catalog-item">
+            <span class="course-badge">ITSY 1300</span>
+            <span class="course-title">Fundamentals of Information Security</span>
+            <span class="course-credits">3 Credits</span>
+          </div>
+          <div class="catalog-item">
+            <span class="course-badge">ITSY 1342</span>
+            <span class="course-title">Information Technology Security</span>
+            <span class="course-credits">3 Credits</span>
+          </div>
+          <div class="catalog-item">
+            <span class="course-badge">COSC 1437</span>
+            <span class="course-title">Programming Fundamentals II</span>
+            <span class="course-credits">4 Credits</span>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="card">
+          <h2>Advising Quick Links</h2>
+          <ul style="list-style: none; display: flex; flex-direction: column; gap: 12px; margin-top: 8px;">
+            <li><a href="#" style="color: var(--primary); font-size: 14px; text-decoration: none; font-weight: 500;">📅 Schedule an Advisor Meeting</a></li>
+            <li><a href="#" style="color: var(--primary); font-size: 14px; text-decoration: none; font-weight: 500;">🎓 UT Dallas Articulation Plan</a></li>
+            <li><a href="#" style="color: var(--primary); font-size: 14px; text-decoration: none; font-weight: 500;">💵 FAFSA Assistance Portal</a></li>
+            <li><a href="#" style="color: var(--primary); font-size: 14px; text-decoration: none; font-weight: 500;">🗺️ Richland Campus Map</a></li>
+          </ul>
+        </div>
+        
+        <div class="card" style="background-color: #fffbeb; border-color: #fde68a;">
+          <h2 style="border-left-color: #d97706; color: #92400e;">Club Prototype Notice</h2>
+          <p style="font-size: 13px; line-height: 1.5; color: #92400e;">This mockup uses static pre-loaded similarity coordinates to show exactly how citations, floating triggers, and token-streaming workflows execute together in the final web app.</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ===================================
+       2. Waving Mascot Floating Widget
+       =================================== -->
+  <div class="widget-container" id="chatbotWidget">
+    <div class="widget-bubble-banner" id="widgetBanner">Come chat with me! 👋</div>
+    
+    <div class="widget-trigger" onclick="toggleChatPanel()" title="Click to open Advisor Chat">
+      <!-- Premium SVG Waving Mascot Character -->
+      <svg class="mascot-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <!-- Shadow Base -->
+        <ellipse cx="50" cy="85" rx="28" ry="8" fill="#e2e8f0" />
+        
+        <!-- Round Bottom Body (Dark Navy Trousers/Base) -->
+        <path d="M22 65 C 22 88, 78 88, 78 65 Z" fill="#1e293b" />
+        
+        <!-- Collared White Button shirt -->
+        <path d="M22 63 C 22 55, 78 55, 78 63 C 78 69, 22 69, 22 63 Z" fill="#ffffff" />
+        <path d="M34 56 L50 69 L66 56 Z" fill="#ffffff" />
+        
+        <!-- Red and Blue Tie -->
+        <polygon points="46,65 54,65 52,78 48,78" fill="#d9381e" />
+        <polygon points="48,60 52,60 50,68" fill="#0056b3" />
+        
+        <!-- Blue Star emblem/badge (Left chest) -->
+        <path d="M68 62 L70 65 L73 65 L71 67 L72 70 L68 68 L64 70 L65 67 L63 65 L66 65 Z" fill="#0056b3" />
+        
+        <!-- Round Robot Head (White) -->
+        <circle cx="50" cy="42" r="28" fill="#ffffff" stroke="#cbd5e1" stroke-width="1" />
+        
+        <!-- Glowing Friendly Eyes -->
+        <circle cx="38" cy="38" r="4.5" fill="#0056b3" />
+        <circle cx="36" cy="36" r="1.5" fill="#ffffff" /> <!-- eye highlight -->
+        <circle cx="62" cy="38" r="4.5" fill="#0056b3" />
+        <circle cx="60" cy="36" r="1.5" fill="#ffffff" /> <!-- eye highlight -->
+        
+        <!-- Thin friendly mouth -->
+        <path d="M44 48 Q 50 51, 56 48" stroke="#64748b" stroke-width="2" stroke-linecap="round" fill="none" />
+        
+        <!-- Waving Arm (Mascot Left Arm - Left side of image) -->
+        <g class="mascot-arm-wave">
+          <!-- Sleek, seamless penguin-flipper waving arm (Eva-style) -->
+          <path d="M20 62 C 12 50, 8 36, 15 32 C 22 28, 25 45, 20 62 Z" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.5" />
+        </g>
+        
+        <!-- Standard Static Arm (Right side of image) -->
+        <g>
+          <!-- Sleek, seamless static right arm pointing down-right -->
+          <path d="M80 62 C 84 72, 88 88, 82 92 C 76 96, 76 74, 80 62 Z" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.5" />
+        </g>
+      </svg>
+      
+      <!-- Live Indicator Alert Badge -->
+      <div class="widget-badge" id="widgetBadge"></div>
+    </div>
+  </div>
+
+  <!-- ===================================
+       3. Slide-Up Chat Panel Simulation
+       =================================== -->
+  <div class="chat-panel" id="chatPanel">
+    
+    <!-- Chat Header -->
+    <div class="chat-header">
+      <div class="chat-header-profile">
+        <div class="chat-header-avatar">
+          <!-- Small Avatar version of Mascot -->
+          <svg class="mascot-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <path d="M22 65 C 22 88, 78 88, 78 65 Z" fill="#1e293b" />
+            <path d="M22 63 C 22 55, 78 55, 78 63 C 78 69, 22 69, 22 63 Z" fill="#ffffff" />
+            <path d="M34 56 L50 69 L66 56 Z" fill="#ffffff" />
+            <polygon points="46,65 54,65 52,78 48,78" fill="#d9381e" />
+            <circle cx="50" cy="42" r="28" fill="#ffffff" />
+            <circle cx="38" cy="38" r="4.5" fill="#0056b3" />
+            <circle cx="62" cy="38" r="4.5" fill="#0056b3" />
+            <path d="M44 48 Q 50 51, 56 48" stroke="#64748b" stroke-width="2" stroke-linecap="round" fill="none" />
+          </svg>
+        </div>
+        <div class="chat-header-info">
+          <h3>Success Coach Advisor</h3>
+          <span>AI Assistant • Online</span>
+        </div>
+      </div>
+      <button class="chat-close-btn" onclick="toggleChatPanel()" title="Close chat">×</button>
+    </div>
+
+    <!-- Chat Message Content Scroll Window -->
+    <div class="chat-body" id="chatBody">
+      <div class="chat-date-divider">TODAY</div>
+      
+      <!-- Bot Message 1 (Intro) -->
+      <div class="message bot">
+        <div class="msg-avatar">
+          <svg viewBox="0 0 100 100" width="28" height="28">
+            <circle cx="50" cy="50" r="45" fill="#0056b3" />
+            <circle cx="38" cy="45" r="5" fill="#ffffff" />
+            <circle cx="62" cy="45" r="5" fill="#ffffff" />
+            <path d="M40 62 Q 50 68, 60 62" stroke="#ffffff" stroke-width="3" stroke-linecap="round" fill="none" />
+          </svg>
+        </div>
+        <div class="msg-content">
+          Hey there! 👋 I am <strong>Ali</strong>, your official Dallas College Success Coach AI. 
+          <br><br>
+          I can provide instant, verified RAG answers regarding academic catalogs, course prerequisites, advisor directories, and transfer programs! How can I help you today?
+          
+          <div class="faq-chips-container">
+            <div class="faq-chips-title">Suggested Inquiries:</div>
+            <button class="faq-chip" onclick="selectChip('What are the prerequisites for COSC 1436?')">"What are the prerequisites for COSC 1436?"</button>
+            <button class="faq-chip" onclick="selectChip('Where is the Richland success coaching office?')">"Where is the Richland success coaching office?"</button>
+            <button class="faq-chip" onclick="selectChip('How do I transfer to UT Dallas?')">"How do I transfer to UT Dallas?"</button>
+          </div>
+        </div>
+      </div>
+      
+    </div>
+
+    <!-- RAG Search Status Spinner (Hidden by default) -->
+    <div style="padding: 0 20px; display: none;" id="ragSpinner">
+      <div class="rag-loading">
+        <div class="spinner-ring"></div>
+        <span>Similarity Search: Querying Supabase vectors...</span>
+      </div>
+    </div>
+
+    <!-- Chat Footer Input Area -->
+    <div class="chat-footer">
+      <div class="chat-input-wrapper">
+        <input type="text" class="chat-input" id="chatInput" placeholder="Type an advising question..." onkeydown="handleInputKey(event)">
+        <button class="chat-send-btn" onclick="submitUserMessage()" title="Send message">
+          <svg viewBox="0 0 24 24">
+            <path d="M2 21l21-9L2 3v7l15 2-15 2v7z" />
+          </svg>
+        </button>
+      </div>
+      <div class="credits-footer">Powered by Gemini 1.5 Flash & pgvector</div>
+    </div>
+
+  </div>
+
+  <!-- ===================================
+       6. Prototype JS Logic
+       =================================== -->
+  <script>
+    // Toggle chat visibility
+    function toggleChatPanel() {
+      const panel = document.getElementById('chatPanel');
+      const badge = document.getElementById('widgetBadge');
+      const banner = document.getElementById('widgetBanner');
+      
+      panel.classList.toggle('active');
+      
+      // Remove badge alert once opened
+      if(panel.classList.contains('active')) {
+        badge.style.display = 'none';
+        banner.style.opacity = '0';
+        
+        // Auto focus input
+        setTimeout(() => {
+          document.getElementById('chatInput').focus();
+        }, 300);
+      }
+    }
+
+    // Preloaded Simulated RAG Database Matches (Mock Data)
+    const mockRAGDatabase = {
+      "prerequisites for cosc 1436": {
+        answer: "Based on the official **Dallas College Academic Catalog [1]**, the course **COSC 1436 (Programming Fundamentals I)** does not require any specific programming prerequisites. However, it does require complete eligibility for **college-level math and reading/writing** to enroll. If you are continuing on to COSC 1437, COSC 1436 itself becomes the direct mandatory prerequisite [1].",
+        sources: [
+          { num: 1, name: "Dallas College Course Catalog: COSC 1436", url: "https://catalog.dallascollege.edu/preview_course_nopop.php?catoid=33&coid=102347" }
+        ]
+      },
+      "richland success coaching office": {
+        answer: "The **Success Coaching Office** at the Richland Campus is located on the second floor of the **Sabine Hall (S Building), Room S-203 [1]**. Standard operational advising hours are Monday through Thursday from 8:00 AM to 7:00 PM, and Friday from 8:00 AM to 5:00 PM [2].",
+        sources: [
+          { num: 1, name: "Richland Campus Directory: Sabin Hall S-203", url: "https://www.dallascollege.edu/about/locations/richland/pages/campus-map.aspx" },
+          { num: 2, name: "Dallas College Success Coach Directory", url: "https://www.dallascollege.edu/admissions/advising/pages/coaches.aspx" }
+        ]
+      },
+      "transfer to ut dallas": {
+        answer: "Under the formal **Dallas College to UT Dallas Transfer Guide [1]**, students holding an Associate of Science in Computer Science can seamlessly transfer up to **60 credits** into the UTD Bachelor of Science program. Transferred classes must reflect a grade of **C or higher** to be accepted toward major coursework [2].",
+        sources: [
+          { num: 1, name: "Dallas College articulation agreements: UT Dallas Guide", url: "https://www.dallascollege.edu/admissions/transfer/pages/utdallas.aspx" },
+          { num: 2, name: "UT Dallas Computer Science Transfer Criteria", url: "https://catalog.utdallas.edu/2026/undergraduate/programs/ecs/computer-science" }
+        ]
+      }
+    };
+
+    // Chip select FAQ
+    function selectChip(questionText) {
+      document.getElementById('chatInput').value = questionText;
+      submitUserMessage();
+    }
+
+    // Capture Enter keypress
+    function handleInputKey(event) {
+      if (event.key === 'Enter') {
+        submitUserMessage();
+      }
+    }
+
+    // Submit user query and query live RAG API backend
+    function submitUserMessage() {
+      const input = document.getElementById('chatInput');
+      const query = input.value.trim();
+      if (!query) return;
+
+      // 1. Add User Message
+      appendMessage('user', query);
+      input.value = '';
+
+      // 2. Trigger RAG Spinner simulation
+      const spinner = document.getElementById('ragSpinner');
+      spinner.style.display = 'block';
+      
+      // Scroll chat down
+      const chatBody = document.getElementById('chatBody');
+      chatBody.scrollTop = chatBody.scrollHeight;
+
+      // 3. Query the Python RAG /api/chat backend
+      fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ query: query })
+      })
+      .then(res => {
+        if (!res.ok) throw new Error('API server error');
+        return res.json();
+      })
+      .then(data => {
+        spinner.style.display = 'none';
+        simulateBotResponse(data.answer, data.sources);
+      })
+      .catch(err => {
+        console.error(err);
+        spinner.style.display = 'none';
+        simulateBotResponse("Error connecting to the live RAG backend server. Please make sure `server.py` is running on your machine.", []);
+      });
+    }
+
+    // Helper to append a single message node
+    function appendMessage(role, text, id = null) {
+      const chatBody = document.getElementById('chatBody');
+      const msgDiv = document.createElement('div');
+      msgDiv.className = `message ${role}`;
+      if (id) msgDiv.id = id;
+
+      const avatarDiv = document.createElement('div');
+      avatarDiv.className = 'msg-avatar';
+
+      if (role === 'user') {
+        avatarDiv.innerText = 'SA';
+      } else {
+        avatarDiv.innerHTML = `
+          <svg viewBox="0 0 100 100" width="28" height="28">
+            <path d="M22 65 C 22 88, 78 88, 78 65 Z" fill="#1e293b" />
+            <path d="M22 63 C 22 55, 78 55, 78 63 C 78 69, 22 69, 22 63 Z" fill="#ffffff" />
+            <path d="M34 56 L50 69 L66 56 Z" fill="#ffffff" />
+            <polygon points="46,65 54,65 52,78 48,78" fill="#d9381e" />
+            <circle cx="50" cy="42" r="28" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.5" />
+            <circle cx="38" cy="38" r="4" fill="#0056b3" />
+            <circle cx="62" cy="38" r="4" fill="#0056b3" />
+            <path d="M44 48 Q 50 51, 56 48" stroke="#64748b" stroke-width="1.5" stroke-linecap="round" fill="none" />
+          </svg>
+        `;
+      }
+
+      const contentDiv = document.createElement('div');
+      contentDiv.className = 'msg-content';
+      contentDiv.innerHTML = text;
+
+      msgDiv.appendChild(avatarDiv);
+      msgDiv.appendChild(contentDiv);
+      chatBody.appendChild(msgDiv);
+
+      chatBody.scrollTop = chatBody.scrollHeight;
+      return contentDiv;
+    }
+
+    // Simulate word-by-word streaming effect (Vercel AI SDK style)
+    function simulateBotResponse(fullText, sources) {
+      const bubbleId = 'bot-stream-' + Date.now();
+      const contentEl = appendMessage('bot', '', bubbleId);
+      
+      const words = fullText.split(' ');
+      let wordIndex = 0;
+      let streamedHTML = '';
+
+      function streamNextWord() {
+        if (wordIndex < words.length) {
+          streamedHTML += words[wordIndex] + ' ';
+          contentEl.innerHTML = streamedHTML;
+          wordIndex++;
+          
+          const chatBody = document.getElementById('chatBody');
+          chatBody.scrollTop = chatBody.scrollHeight;
+          
+          setTimeout(streamNextWord, 45); // Rate speed matching typical stream tokens
+        } else {
+          // Streaming completed -> Attach YouTube-style citations box
+          attachCitations(contentEl, sources);
+        }
+      }
+
+      streamNextWord();
+    }
+
+    // Render citations boxes at the footer of message
+    function attachCitations(containerEl, sources) {
+      const citeBox = document.createElement('div');
+      citeBox.className = 'citations-box';
+      
+      let sourcesHTML = `
+        <div class="citations-header">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="display:inline-block; vertical-align:middle; margin-right:2px;">
+            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+          </svg>
+          Sources Cited:
+        </div>
+      `;
+
+      sources.forEach(src => {
+        sourcesHTML += `
+          <a href="${src.url}" target="_blank" class="citation-link" title="Click to open source page">
+            <span class="citation-num">[${src.num}]</span> ${src.name}
+          </a>
+        `;
+      });
+
+      citeBox.innerHTML = sourcesHTML;
+      containerEl.appendChild(citeBox);
+      
+      const chatBody = document.getElementById('chatBody');
+      chatBody.scrollTop = chatBody.scrollHeight;
+    }
+  </script>
+</body>
+</html>
