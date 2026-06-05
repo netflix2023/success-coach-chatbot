@@ -259,3 +259,9 @@ chroma_db/
 *.tsbuildinfo
 next-env.d.ts
 
+# Local reference media & Google Drive shortcuts
+*.jpg
+*.jpeg
+*.png
+*.gdoc
+
