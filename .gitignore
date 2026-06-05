@@ -240,6 +240,12 @@ pnpm-debug.log*
 .env*.local
 .env
 
+# Aider files
+.aider*
+!.aider.conf.yml
+
+
+
 # vercel deployment metadata
 .vercel
 

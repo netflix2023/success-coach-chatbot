@@ -1,0 +1,10 @@
+# Aider configuration for Dallas College Success Coach Chatbot
+
+# Default model to use via OpenRouter
+model: openrouter/google/gemini-2.5-flash
+
+# Enable auto-commits in the local Git repository after edits (never pushes to remote)
+auto-commit: true
+
+# Suggested files to load automatically on startup
+map-tokens: 1024
