@@ -1,0 +1,6 @@
+{
+  "openrouter/google/gemini-2.5-flash": {
+    "max_input_tokens": 12000,
+    "max_output_tokens": 4000
+  }
+}

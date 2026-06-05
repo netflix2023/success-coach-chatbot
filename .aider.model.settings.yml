@@ -1,0 +1,4 @@
+- name: openrouter/google/gemini-2.5-flash
+  edit_format: diff-fenced
+  extra_params:
+    max_tokens: 8000
