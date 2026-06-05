@@ -249,6 +249,11 @@ pnpm-debug.log*
 # vercel deployment metadata
 .vercel
 
+# local databases
+chroma_db/
+**/chroma_db/
+
 # typescript incremental compilation cache
 *.tsbuildinfo
 next-env.d.ts
+
