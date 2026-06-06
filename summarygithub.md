@@ -25,11 +25,20 @@ This file summarizes the current state of the club repository `Dallas-College-AI
 * **Status:** Completed (ADR created and approved)
 * **Assignees:** `@darrian-xxv` and `@tjchan001`
 * **Resolution Summary:**
-  * final decisions documented in [INFRASTRUCTURE_ARCHITECTURE.md](file:///mnt/chromeos/GoogleDrive/MyDrive/AntigravityProjects/SucesscoachChatbot/docs/INFRASTRUCTURE_ARCHITECTURE.md).
+  * Final decisions documented in [INFRASTRUCTURE_ARCHITECTURE.md](file:///mnt/chromeos/GoogleDrive/MyDrive/AntigravityProjects/SucesscoachChatbot/docs/INFRASTRUCTURE_ARCHITECTURE.md).
   * **Selected DB**: Supabase (pgvector) over Neon Postgres due to unified 1GB free storage and zero idle-connection cold starts.
   * **Selected Host**: Vercel for single-deploy Next.js UI & Serverless Edge endpoints.
   * **Selected LLM Gateway**: OpenRouter with direct Gemini API key fallback.
   * **Rate Limiting**: Custom token-bucket edge rate limits to preserve the 15 RPM free Gemini tier limit.
+
+### Issue #2: User Stories Definition
+* **Status:** Completed (Stories written)
+* **Assignees:** Project Team / Collaborators
+* **Resolution Summary:**
+  * Completed user stories and acceptance criteria for all placeholder categories inside the [docs/user-stories/](file:///mnt/chromeos/GoogleDrive/MyDrive/AntigravityProjects/SucesscoachChatbot/docs/user-stories/) directory:
+    * [DEGREE_PLANNING_STORIES.md](file:///mnt/chromeos/GoogleDrive/MyDrive/AntigravityProjects/SucesscoachChatbot/docs/user-stories/DEGREE_PLANNING_STORIES.md)
+    * [CAMPUS_EVENTS_STORIES.md](file:///mnt/chromeos/GoogleDrive/MyDrive/AntigravityProjects/SucesscoachChatbot/docs/user-stories/CAMPUS_EVENTS_STORIES.md)
+    * [LOST_AND_FOUND_STORIES.md](file:///mnt/chromeos/GoogleDrive/MyDrive/AntigravityProjects/SucesscoachChatbot/docs/user-stories/LOST_AND_FOUND_STORIES.md)
 
 ---
 
