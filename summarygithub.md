@@ -26,8 +26,8 @@ This file summarizes the current state of the club repository `Dallas-College-AI
 * **Assignees:** `@darrian-xxv` and `@tjchan001`
 * **Resolution Summary:**
   * Final decisions documented in [INFRASTRUCTURE_ARCHITECTURE.md](file:///mnt/chromeos/GoogleDrive/MyDrive/AntigravityProjects/SucesscoachChatbot/docs/INFRASTRUCTURE_ARCHITECTURE.md).
-  * **Selected DB**: Supabase (pgvector) over Neon Postgres due to unified 1GB free storage and zero idle-connection cold starts.
-  * **Selected Host**: Vercel for single-deploy Next.js UI & Serverless Edge endpoints.
+  * **Selected DB**: Neon Postgres (pgvector) for production and ChromaDB for local prototyping.
+  * **Selected Host**: Vercel for React frontend and Node.js backend.
   * **Selected LLM Gateway**: OpenRouter with direct Gemini API key fallback.
   * **Rate Limiting**: Custom token-bucket edge rate limits to preserve the 15 RPM free Gemini tier limit.
 

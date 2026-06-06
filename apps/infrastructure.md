@@ -1,54 +1,62 @@
 # System Infrastructure & Cloud Deployment Plan
 > **Philosophy**: Built 100% on Industry-Standard Free Hobby Tiers & Open-Source Utilities.
-> **Scope**: Supabase, Vercel Hosting, Gemini API, and Automated Scrapers.
+> **Scope**: Neon Postgres, ChromaDB, Streamlit Prototyping, and Vercel Hosting.
 
 ---
 
 ## 1. Cloud Infrastructure Mapping
 
-The following schema maps the connections between our hosting providers, databases, and LLM providers, highlighting the free tiers utilized.
+The following schema maps the connections between our hosting providers, databases, and LLM providers during both Prototyping and Production stages:
 
+### A. Prototyping Sandbox Flow
 ```mermaid
 graph LR
-    subgraph Vercel ["Vercel (Free Hobby Tier)"]
-        NextUI["Next.js Web Client UI\n(React SPA)"]
-        EdgeRoutes["/api/chat Route\n(Serverless API)"]
+    subgraph Local ["Localhost (Developer Machine)"]
+        Streamlit["Streamlit App UI\n(Python Web Dashboard)"]
+        Chroma[("ChromaDB Vector DB\n(Local disk storage)")]
     end
 
-    subgraph Supabase ["Supabase (Free Tier)"]
-        Postgres[("PostgreSQL Database")]
+    subgraph LLM ["Inference Gateway"]
+        OpenRouter["OpenRouter API\n(Gemma 2 / Qwen / Gemini)"]
+    end
+
+    Streamlit <-->|Local Query| Chroma
+    Streamlit <-->|Query Prompt| OpenRouter
+```
+
+### B. Production Cloud Flow
+```mermaid
+graph LR
+    subgraph Vercel ["Vercel Hosting"]
+        NextUI["React Frontend UI\n(Static Page)"]
+        NodeServer["Node.js Backend\n(Serverless API Route)"]
+    end
+
+    subgraph Neon ["Neon Postgres (Free Tier)"]
+        Postgres[("Postgres Database")]
         pgv["pgvector Extension"]
-        Storage["Storage (1GB)\nScraped Markdown Logs"]
     end
 
-    subgraph LLM ["Inference Layer (Free Tiers)"]
-        GeminiFlash["Google Gemini 1.5 Flash\n(15 RPM / 1M TPM Free API)"]
-        OllamaLocal["Local Ollama (Gemma2)\n(Offline Development)"]
+    subgraph LLM ["Inference Gateway"]
+        OpenRouter2["OpenRouter API / Gemini Direct"]
     end
 
-    subgraph Ingestion ["Ingestion Automation"]
-        Colab["Google Colab / GitHub Action\n(Playwright/Crawl4AI)"]
-    end
-
-    NextUI <--> EdgeRoutes
-    EdgeRoutes <-->|Similarity Query| Postgres
+    NextUI <--> NodeServer
+    NodeServer <-->|SQL Vector Similarity| Postgres
     Postgres <--> pgv
-    EdgeRoutes <-->|Context Prompt| GeminiFlash
-    Colab -->|Markdown Text Chunks| Postgres
-    Colab -->|Backup Dumps| Storage
+    NodeServer <-->|Context Prompt| OpenRouter2
 ```
 
 ---
 
-## 2. Database Infrastructure (Supabase pgvector)
+## 2. Database Infrastructure (Neon Postgres & ChromaDB)
 
-We utilize **Supabase** due to its underlying PostgreSQL environment and built-in support for `pgvector` similarity operations.
+We utilize a dual-stage database architecture: **ChromaDB** for rapid offline evaluation of chunks, transitioning to **Neon Postgres** for our production environment due to its built-in support for `pgvector` similarity operations.
 
-### 📊 A. Supabase Free Tier Allowances
-* **Database Size**: **500 MB** of direct Postgres storage.
-* **File Storage**: **1 GB** of asset/file storage.
-* **CPU / Active state**: Database goes to sleep after 1 week of inactivity (easily awakened by triggering an API call).
-* **Connections**: Up to **60 direct active connections** (scaled via pgBouncer pooler).
+### 📊 A. Neon Postgres Free Tier Allowances
+* **Database Size**: **500 MB** of serverless Postgres storage.
+* **Autoscaling Compute**: Compute scales down to zero when idle, minimizing costs.
+* **Connections**: Supports connection pooling out-of-the-box (ideal for Node.js serverless functions).
 
 ### 🛠️ B. Database Schema Definitions
 We define our tables using **Prisma ORM** schemas to ensure complete TS auto-generation and type safety.

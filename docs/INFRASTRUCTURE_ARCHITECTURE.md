@@ -16,35 +16,37 @@ As a student-led club project, we operate under a strict **$0.00/month budget** 
 
 ## 2. Database & Vector Storage Evaluation
 
-We evaluated five database solutions for storing relational chat logs and 768-dimensional vector embeddings generated from catalog scraping:
+We evaluated vector database options for storing relational chat logs and 768-dimensional vector embeddings generated from catalog scraping across Prototyping and Production stages:
 
-| Service | Free Tier Capacity | Vector Support | Added Services | Key Limitations | Decision |
+| Service | Capacity | Vector Support | Added Services | Key Limitations | Decision |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Supabase** | **500 MB DB / 1 GB Storage** | ✅ Yes (`pgvector`) | Auth, Realtime, Backups | Goes to sleep after 1 week inactivity | **SELECTED (Primary)** |
-| **Neon Postgres** | 500 MB DB | ✅ Yes (`pgvector`) | None | Severe cold starts on serverless connection | Rejected (Backup) |
+| **Neon Postgres** | **500 MB DB** | ✅ Yes (`pgvector`) | Autoscaling, Branching | Cold start compute latency | **SELECTED (Production)** |
+| **ChromaDB** | Local / Disk | ✅ Yes (Native) | Light, Embedded | Local-only, not suited for multi-user web | **SELECTED (Prototyping)** |
+| **Supabase** | 500 MB DB / 1 GB Storage | ✅ Yes (`pgvector`) | Auth, Realtime, Storage | Goes to sleep after 1 week inactivity | Rejected (Alternative) |
 | **Convex** | 500 MB DB | ❌ No native ANN | Auth, Serverless Functions | Not suitable for RAG similarity indexing | Rejected |
 | **Pinecone** | 2 GB storage | ✅ Yes (Native vector) | None | Separates data; double service configs | Rejected |
 | **LanceDB** | Embedded/Local | ✅ Yes (Native vector) | None | Challenging to query concurrently from edge | Rejected |
 
-### 🔍 Rationale: Why Supabase is Selected over Neon
-1. **Unified File Storage**: Supabase includes **1 GB of free file storage**, allowing us to store raw scraped catalogs and PDF backups. Neon is database-only.
-2. **Built-in Services**: Supabase provides built-in Authentication and Row-Level Security (RLS) out of the box, simplifying future student login expansions.
-3. **No Connection Cold Starts**: Neon's compute lifecycle can introduce a 3–5 second cold-start latency if database connections are idle, violating our <1.2s response time target.
+### 🔍 Rationale: Why Neon Postgres & ChromaDB are Selected
+1. **ChromaDB for Prototyping**: ChromaDB is embedded locally on developer machines and runs inside our Python/Streamlit script without setting up cloud accounts, allowing rapid iteration.
+2. **Neon Postgres for Production**: Neon Postgres provides Postgres with `pgvector` out of the box, auto-scaling compute down to zero to fit free tier usage.
+3. **Database Branching**: Neon's schema branching fits our collaborative workflow, enabling developers to test migrations on isolated database branches just like Git.
+4. **Node.js/Prisma Compatibility**: Neon integrates cleanly with Prisma and Drizzle ORM to generate TypeScript definitions for the Node.js/React stack.
 
 ---
 
 ## 3. Web Hosting & Compute Evaluation
 
-We evaluated three cloud hosting targets for deploying our Next.js frontend application and backend inference endpoints:
+We evaluated cloud hosting targets for deploying our React frontend application and Node.js backend:
 
 | Service | Free Tier Allowances | Key Benefits | Key Limitations | Decision |
 | :--- | :--- | :--- | :--- | :--- |
-| **Vercel** | **100 GB Bandwidth / mo** | Native Next.js support, Auto-SSL, edge routing | 10-second max function timeout | **SELECTED** |
-| **Cloudflare** | Unlimited requests | Global edge hosting | No standard Node.js support (Edge only) | Rejected |
+| **Vercel** | **100 GB Bandwidth / mo** | Native React/Next.js hosting, auto-SSL, serverless functions | 10-second max function timeout | **SELECTED** |
+| **Cloudflare** | Unlimited requests | Global edge hosting | Node.js compatibility challenges on workers | Rejected |
 | **OCI (Oracle Cloud)**| 4 ARM Cores / 24 GB RAM | Always Free compute instances | High manual maintenance & DevOps complexity | Rejected |
 
 ### 🔍 Rationale: Why Vercel is Selected
-Vercel allows us to deploy the Next.js UI and the `/api/chat` API routes together in a single monorepo deploy. This removes the need for a separate FastAPI backend server (avoiding multiple cold-start barriers) and leverages standard Next.js serverless routing.
+Vercel allows us to deploy the React frontend and Node.js backend routes as serverless functions in a single deployment flow. This minimizes compute latency, simplifies deployment for student club members, and handles scaling out-of-the-box.
 
 ---
 
@@ -58,9 +60,9 @@ We evaluated the choice between direct LLM APIs and an API Gateway proxy like Op
 | **Direct Gemini API** | **$0.00** | ❌ Low (locked to Google models) | Low (Google AI SDK) | Rate-limiting constraints (15 RPM) | **SELECTED (Primary Fallback)** |
 
 ### 🔍 Rationale: Why OpenRouter + Gemini Direct Fallback is Selected
-1. **Vendor Agnosticism**: OpenRouter lets us swap models (e.g., Qwen 2, Gemma 2, Gemini Flash) without changing a single line of backend TS/JS code.
-2. **Unified Client**: We use the standard Vercel AI SDK OpenAI provider pointing to OpenRouter's URL.
-3. **Failover Safety**: If the OpenRouter free-tier quota is depleted or experiences rate limits, the Next.js chat route automatically falls back to invoking the direct Google Gemini API.
+1. **Vendor Agnosticism**: OpenRouter lets us swap models (e.g., Qwen 2, Gemma 2, Gemini Flash) without changing a single line of backend Node.js code.
+2. **Unified Client**: We use the standard OpenAI client SDK pointing to OpenRouter's proxy base URL.
+3. **Failover Safety**: If the OpenRouter free-tier quota is depleted or experiences rate limits, the Node.js chat endpoint automatically falls back to invoking the direct Google Gemini API.
 
 ---
 
@@ -69,5 +71,8 @@ We evaluated the choice between direct LLM APIs and an API Gateway proxy like Op
 To keep the application running permanently on the free tiers, we implement three mandatory protocols:
 
 1. **Max Token Caps**: OpenRouter requests must explicitly define `max_tokens` (capped at **4,000 to 8,000**). This prevents OpenRouter from reserving massive credits and throwing a **402 Payment Required** error when balances are low.
-2. **Edge Rate Limiting**: Next.js middleware enforces a rate limit of **5 requests per minute per IP address** using a local memory-based token bucket, protecting our free API rate ceilings.
-3. **Supabase Sleep Awakening**: A GitHub Actions CRON workflow will ping the database once every 3 days with a lightweight query to prevent Supabase from going to sleep.
+2. **Rate Limiting**: The Node.js backend enforces a rate limit of **5 requests per minute per IP address** using a memory-based token bucket to protect our free API rate ceilings.
+3. **Neon Cold-Start Mitigation**: Since Neon Postgres compute scales down to zero when idle, the first query after inactivity may experience a 3–5 second latency. To mitigate this:
+   - The UI displays an active "Waking up database..." spinner during initial connection.
+   - A background cron-ping checks the database status periodically to keep the instance warm during peak student hours.
+
