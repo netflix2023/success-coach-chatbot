@@ -22,11 +22,14 @@ This file summarizes the current state of the club repository `Dallas-College-AI
 ## 2. Active Issue Assignments & Discussions
 
 ### Issue #10: Evaluate 3rd-Party Free Tier Services & Agnostic LLM Architecture
-* **Status:** In progress (Success Coach Kanban Board)
+* **Status:** Completed (ADR created and approved)
 * **Assignees:** `@darrian-xxv` and `@tjchan001`
-* **Discussion Summary:**
-  * **Constraints Check:** `@tjchan001` queried whether the stack is free-tier only or if there is a budget. `@dbracewell` clarified that since there is no club budget, the focus is on free tiers but ranking cheap, high-performance alternatives is highly encouraged.
-  * **Architecture Proposal (by @tjchan001):** Proposed a hybrid Retrieval-Augmented Generation (RAG) architecture supporting over 800 courses and 300 degree programs. The recommendation selects Google's **Gemma 4 (31B)** as the primary model due to context size, with supplemental routing to **NVIDIA Nemotron 3 Super** and **Qwen3** variants via **OpenRouter** as the unified API layer.
+* **Resolution Summary:**
+  * final decisions documented in [INFRASTRUCTURE_ARCHITECTURE.md](file:///mnt/chromeos/GoogleDrive/MyDrive/AntigravityProjects/SucesscoachChatbot/docs/INFRASTRUCTURE_ARCHITECTURE.md).
+  * **Selected DB**: Supabase (pgvector) over Neon Postgres due to unified 1GB free storage and zero idle-connection cold starts.
+  * **Selected Host**: Vercel for single-deploy Next.js UI & Serverless Edge endpoints.
+  * **Selected LLM Gateway**: OpenRouter with direct Gemini API key fallback.
+  * **Rate Limiting**: Custom token-bucket edge rate limits to preserve the 15 RPM free Gemini tier limit.
 
 ---
 
