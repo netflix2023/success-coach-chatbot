@@ -144,6 +144,70 @@ To avoid overloading the LLM's context window and wasting tokens, the parser sho
 
 ## 5. Technical Deliverables & System Architecture
 
+### System Architecture Diagram
+The diagram below shows the high-level architecture of our ingestion pipeline, storage mapping, and query flow within the Successcoach Chatbot system:
+
+```mermaid
+flowchart TB
+    subgraph DC[Dallas College Public Sites]
+        Catalog["Catalog Website (catalog.dcccd.edu)"]
+        Schedule["Class Schedule (schedule.dallascollege.edu)"]
+        Concourse["Concourse Portal (concourse.dallascollege.edu)"]
+    end
+
+    subgraph Pipeline[Ingestion Pipeline / Python Service]
+        Crawler["Crawler (aiohttp, limit: 5 req/s)"]
+        Parser["Parser (BeautifulSoup)"]
+        Filter["Boilerplate Filter (Policy Exclusions)"]
+        Chunker["Semantic Chunker (Header-based)"]
+        Embedder["Embedding Generator (OpenAI / Cohere API)"]
+    end
+
+    subgraph Storage[Neon PostgreSQL Database]
+        tbl_courses[("Table: courses")]
+        tbl_instructors[("Table: instructors")]
+        tbl_sections[("Table: course_sections")]
+        tbl_chunks[("Table: course_chunks (pgvector)")]
+    end
+
+    subgraph Application[Successcoach Chatbot Backend]
+        NextApp["Chatbot App Server (Next.js 15)"]
+        LLM["OpenRouter / LLM (Context Injection)"]
+    end
+
+    subgraph Client[Client Side]
+        UserUI["Student Chat Interface (Mobile / Web)"]
+    end
+
+    %% Data flow mapping
+    Catalog --> Crawler
+    Schedule --> Crawler
+    Concourse --> Crawler
+
+    Crawler --> Parser
+    Parser --> Filter
+    Filter --> Chunker
+    Chunker --> Embedder
+
+    %% Database insertions
+    Parser -->|"Upsert Course & Instructor info"| tbl_courses
+    Parser -->|"Upsert Instructor CVs"| tbl_instructors
+    Parser -->|"Insert Section schedule & details"| tbl_sections
+    Embedder -->|"Save vectorized section chunks"| tbl_chunks
+
+    %% Relationships in Database
+    tbl_courses -.->|"1:N Relation"| tbl_sections
+    tbl_instructors -.->|"1:N Relation"| tbl_sections
+    tbl_sections -.->|"1:N Relation"| tbl_chunks
+
+    %% Query flow
+    UserUI <--> NextApp
+    NextApp <-->|"Cosine Vector Search (HNSW Index)"| tbl_chunks
+    NextApp <-->|"Fetch section & instructor details"| tbl_sections
+    NextApp -->|"Injected Context + Student Prompt"| LLM
+    LLM -->|"Coaching Response"| NextApp
+```
+
 ### Pipeline Flow
 The ingestion pipeline moves data from public HTML pages to our production PostgreSQL database:
 
