@@ -37,23 +37,33 @@ To programmatically retrieve this data, the crawler crawls the **Credit Class Sc
    * **Class Syllabus Link**: Inside the row's "Links" cell, the scraper extracts the href from the `<a>` tag labeled `Class Syllabus` (pointing to `https://concourse.dallascollege.edu/syllabus/public/<syllabus_id>`).
 4. **Download and Parse Concourse HTML**: The crawler makes a standard web GET request to these Concourse URLs. Because Concourse serves public compliance pages under HB 2504, we can download the HTML pages directly without needing any authentication, then parse the page elements (e.g., the left-hand "Education" list or the right-hand "Course list" on a faculty profile).
 
-### Document Formats
-* **Syllabi**: Concourse offers two formats:
-  1. **HTML Web Pages (Recommended)**: Accessible via `https://concourse.dallascollege.edu/syllabus/public/<syllabus_id>`. This is highly structured using semantic HTML elements (like `<h3>` headers and `<table class="...">` schemas), making text and table extraction very accurate.
-  2. **PDF Documents**: Accessible via `https://concourse.dallascollege.edu/syllabus/public/<syllabus_id>/pdf`. These are harder to parse programmatically without column/table layout corruption.
-* **CVs (Vitas)**: Rendered as HTML profile sheets inside Concourse, detailing academic history, professional credentials, and teaching backgrounds.
+---
 
-### Scraping Obstacles & Rate Limits
-* **CAPTCHAs**: No visual CAPTCHAs (like reCAPTCHA) are currently active on public schedules or Concourse profile views.
-* **Rate Limits & Anti-Scraping**: Dallas College systems implement network-level rate limits (causing connection resets or HTTP `429 Too Many Requests` errors) if a single IP makes excessive concurrent requests.
-* **Mitigation Strategy**: The scraper must:
-  * Restrict concurrent requests to a maximum of 5.
-  * Implement a randomized delay (0.5 to 1.5 seconds) between downloads.
-  * Handle HTTP `429` errors using an exponential backoff retry mechanism.
+## 3. Data Extraction & Separation Strategy
+
+### Course-Level vs. Section-Level Data Split
+To keep our database lean and avoid wasting LLM context window tokens on redundant information, the parser divides the scraped data into two categories:
+
+1. **Course-Level (Static Catalog Data)**:
+   * **Stored In**: `courses` table.
+   * **Attributes**: Course name, prefix/code (e.g., `BIOL-1406`), credit hours, prerequisites, and the official catalog description.
+   * **Storage Frequency**: Stored **once** per course code. Sections of the same course refer back to this parent record.
+2. **Section-Level (Dynamic, Professor-Specific Data)**:
+   * **Stored In**: `course_sections` & `course_chunks`.
+   * **Attributes**: Meeting schedule, specific classroom, instructor ID, textbook requirements, grading criteria weights, major projects, and weekly calendars.
+   * **Storage Frequency**: Saved for each section instance (e.g., `BIOL-1406-11001` vs. `BIOL-1406-11002`).
+
+### Boilerplate Policy Filtering (What We Discard)
+Dallas College syllabi contain extensive boilerplate sections mandated by the college or the state. These sections are identical across thousands of sections. Storing or vectorizing them causes vector database bloat and degrades RAG search relevance.
+The crawler explicitly **excludes** the following sections from chunking:
+* **Academic Policy Disclosures**: Policies regarding academic dishonesty, cheating, plagiarism, and code of conduct.
+* **Institutional / Legal Notices**: ADA compliance statements, Title IX disclosures, and religious holy days policies.
+* **Support Services Info**: Campus tutoring locations, library hours, counseling services, and computer lab schedules.
+* **Emergency Procedures**: Evacuation instructions, campus police contact details, and weather closure policies.
 
 ---
 
-## 3. Data Schema & AI Viability
+## 4. Proposed Data Schema & AI Viability
 
 ### Proposed JSON Schema
 The following JSON schema links a core Course description to its active term sections, Concourse syllabi, and instructor CVs:
@@ -132,7 +142,7 @@ To avoid overloading the LLM's context window and wasting tokens, the parser sho
 
 ---
 
-## 4. Technical Deliverables & System Architecture
+## 5. Technical Deliverables & System Architecture
 
 ### Pipeline Flow
 The ingestion pipeline moves data from public HTML pages to our production PostgreSQL database:
@@ -143,7 +153,8 @@ flowchart TD
     Schedule[Scrape Credit Schedule] --> Map_Section[Map Course to Sections]
     Map_Section --> Download[Fetch Concourse HTML]
     Download --> Parser[Cheerio/BeautifulSoup Parser]
-    Parser --> Chunk[Semantic Header Chunker]
+    Parser --> Filter[Boilerplate & Policy Filter]
+    Filter --> Chunk[Semantic Header Chunker]
     Chunk --> VectorDB[Load to Neon pgvector Database]
 ```
 
@@ -151,10 +162,10 @@ flowchart TD
 1. **Course Details**:
    * *Source*: `https://catalog.dcccd.edu/content.php`
    * *Format*: HTML Web Page.
-   * *Destination*: PostgreSQL `courses` table.
+   * *Destination*: PostgreSQL `courses` table (stored once).
 2. **Syllabus Content**:
    * *Source*: `https://concourse.dallascollege.edu/syllabus/public/<syllabus_id>`
-   * *Format*: HTML Web Page (parsed to clean Markdown).
+   * *Format*: HTML Web Page (parsed to clean Markdown, with boilerplate filtered out).
    * *Destination*: PostgreSQL `course_chunks` table containing vectorized text blocks.
 3. **Instructor CVs**:
    * *Source*: `https://concourse.dallascollege.edu/syllabus/public/<faculty_id>/cv`
@@ -163,7 +174,7 @@ flowchart TD
 
 ---
 
-## 5. Sample HTML Structures
+## 6. Sample HTML Structures
 
 ### A. eConnect Credit Class Schedule Row
 Below is a realistic, structured representation of a course section's HTML table row (`<tr>`) as scraped from the eConnect class schedule lookup page:
@@ -267,6 +278,13 @@ Below is a structured HTML snippet representing the key contents of a public cou
           <li><strong>Week 6:</strong> Final Projects and Exam Review</li>
         </ul>
       </section>
+
+      <!-- Boilerplate Policy (This section should be ignored by the parser) -->
+      <section class="syllabus-section boilerplate" id="section-institutional-policies">
+        <h2>Institutional Policies & Procedures</h2>
+        <p>All students must abide by the Dallas College Student Code of Conduct. Academic dishonesty, including plagiarism, cheating, or collusion, will result in disciplinary action...</p>
+        <p>In accordance with Section 504 of the Rehabilitation Act, accommodations are available for students with documented disabilities...</p>
+      </section>
     </main>
   </div>
 </body>
@@ -275,7 +293,7 @@ Below is a structured HTML snippet representing the key contents of a public cou
 
 ---
 
-## 6. Proposed Relational & Vector Database Schema
+## 7. Proposed Relational & Vector Database Schema
 
 To support quick structured lookups and low-latency similarity searches via RAG, we will use **Neon Postgres** with the `pgvector` extension.
 
@@ -289,7 +307,7 @@ CREATE TABLE courses (
     course_code VARCHAR(20) UNIQUE NOT NULL, -- e.g., 'COSC-1436'
     course_name VARCHAR(255) NOT NULL,       -- e.g., 'Programming Fundamentals I'
     credit_hours INT NOT NULL,               -- e.g., 4
-    description TEXT,
+    description TEXT,                        -- Generic course description from catalog
     prerequisites TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -321,6 +339,7 @@ CREATE TABLE course_sections (
 );
 
 -- 4. Course Chunks Table (Semantic syllabus segments vectorized for RAG)
+-- Excludes institutional boilerplate, focuses on textbook requirements, rubrics, and calendars.
 CREATE TABLE course_chunks (
     id SERIAL PRIMARY KEY,
     section_id INT REFERENCES course_sections(id) ON DELETE CASCADE,
@@ -336,9 +355,9 @@ CREATE INDEX ON course_chunks USING hnsw (embedding vector_cosine_ops);
 
 ---
 
-## 7. Proposed Ingestion & Parsing Pipeline
+## 8. Proposed Ingestion & Parsing Pipeline
 
-The parsing logic utilizes Python's `BeautifulSoup` to extract class structures and index them.
+The parsing logic utilizes Python's `BeautifulSoup` to extract class structures, index them, and filter out boilerplate content.
 
 ```python
 from bs4 import BeautifulSoup
@@ -347,6 +366,20 @@ import re
 class AcademicDataIngester:
     def __init__(self, db_connection):
         self.db = db_connection
+        # Blocklist for common Dallas College/HB 2504 policy sections
+        self.boilerplate_keywords = [
+            "institutional policy", "academic honesty", "cheating", 
+            "plagiarism", "disability services", "ada compliance", 
+            "title ix", "emergency procedure", "evacuation", 
+            "campus police", "student services", "holy days"
+        ]
+
+    def is_boilerplate(self, section_name: str) -> bool:
+        """
+        Determines if a section contains standard institutional boilerplate.
+        """
+        name_lower = section_name.lower()
+        return any(kw in name_lower for kw in self.boilerplate_keywords)
 
     def parse_econnect_row(self, row_html: str, term: str) -> dict:
         """
@@ -403,7 +436,7 @@ class AcademicDataIngester:
         """
         Parses Concourse public syllabus HTML.
         Splits content into semantic chunks (textbooks, rubrics, schedule)
-        for vectorization.
+        while discarding institutional policies.
         """
         soup = BeautifulSoup(syllabus_html, 'html.parser')
         
@@ -411,7 +444,7 @@ class AcademicDataIngester:
         
         # 1. Parse Required Materials
         textbook_section = soup.find('section', id='section-textbooks')
-        if textbook_section:
+        if textbook_section and not self.is_boilerplate("Required Materials"):
             textbook_items = textbook_section.find_all('div', class_='textbook-item')
             textbooks_text = []
             for item in textbook_items:
@@ -424,7 +457,7 @@ class AcademicDataIngester:
 
         # 2. Parse Evaluation & Rubric Table
         rubric_section = soup.find('section', id='section-evaluation')
-        if rubric_section:
+        if rubric_section and not self.is_boilerplate("Grading Rubric"):
             table = rubric_section.find('table', class_='rubric-table')
             rubric_rows = []
             if table:
@@ -439,19 +472,41 @@ class AcademicDataIngester:
 
         # 3. Parse Weekly Course Schedule
         schedule_section = soup.find('section', id='section-schedule')
-        if schedule_section:
+        if schedule_section and not self.is_boilerplate("Weekly Calendar"):
             items = [li.text.strip() for li in schedule_section.find_all('li')]
             chunks.append({
                 "section_name": "Course Schedule & Weekly Calendar",
                 "content": "\n".join(items)
             })
 
+        # Custom header-based fallback parser that ignores boilerplate
+        all_sections = soup.find_all('section', class_='syllabus-section')
+        for sec in all_sections:
+            header = sec.find(['h2', 'h3'])
+            if not header:
+                continue
+            section_name = header.text.strip()
+            
+            # Skip if it is boilerplate OR already handled by primary parsers
+            if self.is_boilerplate(section_name) or section_name in [
+                "Course Description", "Required Materials & Textbooks", 
+                "Evaluation Criteria & Grading Rubric", "Course Schedule & Weekly Calendar"
+            ]:
+                continue
+            
+            content = sec.get_text(separator="\n").replace(section_name, "").strip()
+            if len(content) > 30:
+                chunks.append({
+                    "section_name": section_name,
+                    "content": content
+                })
+
         return chunks
 ```
 
 ---
 
-## 8. Comparative Analysis & Inquiries for Trey Sweeney
+## 9. Comparative Analysis & Inquiries for Trey Sweeney
 
 We cross-referenced our proposed mapping architecture with Trey Sweeney's data discovery (`research/ISSUE_12_ACADEMIC_DATA_MAP_TREY.md`).
 
